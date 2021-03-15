@@ -50,7 +50,7 @@ Sub stock_check()
             ActiveCell.Offset(1, 0).Select
            
            'identify if the new row is a new ticker
-           If ActiveCell.Value <> current_ticker The    
+           If ActiveCell.Value <> current_ticker Then    
                'if new ticker found, results for previous one are summated and printed to table
                
                'last row of the old ticker
