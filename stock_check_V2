@@ -50,7 +50,7 @@ Sub stock_check()
             ActiveCell.Offset(1, 0).Select
            
            'identify if the new row is a new ticker
-           If ActiveCell.Value <> current_ticker Then    
+           If ActiveCell.Value <> current_ticker Then
                'if new ticker found, results for previous one are summated and printed to table
                
                'last row of the old ticker
@@ -58,7 +58,11 @@ Sub stock_check()
                'yearly change = closing price last day - opening price first day
                yearly_change = ActiveSheet.Range(end_address).Offset(0, 5).Value - ActiveSheet.Range(start_address).Offset(0, 5).Value
                'percentage change = yearly change / opening price first day * 100
-               percentage_change = Round((yearly_change / ActiveSheet.Range(start_address).Offset(0, 5).Value * 100), 2)
+               If yearly_change <> 0 Then
+                    percentage_change = Round((yearly_change / ActiveSheet.Range(start_address).Offset(0, 5).Value * 100), 2)
+               Else
+                    percentage_change = 0
+               End If
                
                'print to table
                ActiveSheet.Range(print_address).Select
