@@ -1,117 +1,153 @@
-Sub stock_check()
-
-    '	key variables declared
-    Dim ws As Worksheet
+Sub Stock_Check()
+    '   Variable declarations
+    Dim WS As Worksheet
     
+    Dim current_row As Long
+    Dim start_row As Long
+    Dim end_row As Long
+    Dim print_row As Long
+       
     Dim greatest_increase As Double
     Dim greatest_decrease As Double
     Dim greatest_volume As Double
     
-    Dim start_address As String 'cell referece for where the ticker data starts
-    Dim end_address As String 'cell referece for where the ticker data ends
-    Dim print_address As String 'cell referece for where to print results
+    Dim yearly_change As Double
+    Dim percentage_change As Double
+    Dim cumulative_total As Double
+    Dim current_ticker As String
     
-    Dim cumulative_volume As Double 'for adding daily traded volume
-        
-    '	loop through worksheets
-    For Each ws In ThisWorkbook.Worksheets
-        ws.Activate
-        
-        '	set additional column headers
-        ActiveSheet.Range("I1").Value = "Ticker"
-        ActiveSheet.Range("J1").Value = "Yearly Change"
-        ActiveSheet.Range("K1").Value = "Percentage Change"
-        ActiveSheet.Range("L1").Value = "Total Stock Volume"
-        ActiveSheet.Range("O2").Value = "Greatest % Increase"
-        ActiveSheet.Range("O3").Value = "Greatest % Decrease"
-        ActiveSheet.Range("O4").Value = "Greatest Total Volume"
-        ActiveSheet.Range("P1").Value = "Ticker"
-        ActiveSheet.Range("Q1").Value = "Value"
-        ActiveSheet.Range("I:Q").Columns.AutoFit
-            
-        '	reset for this worksheet
-        greatest_increase = 0
-        greatest_decrease = 0
-        greatest_volume = 0
-            
-        '	starting values for this worksheet
-        cumulative_volume = ActiveSheet.Range("G2").Value
-        start_address = "A2"
-        print_address = "I2"
+    '   Iterate through worksheets in the workbook
+    '----------------------------------------------------------------------
+    For Each WS In ThisWorkbook.Worksheets
     
-        '	set the starting poition
-        ActiveSheet.Range("A2").Select
-        '	set first ticker value,
-        Dim current_ticker As String 'current ticker name
-        current_ticker = ActiveCell.Value
-    
-        '	move down rows until end of list (identified as first empty cell)
-        Do While Not IsEmpty(ActiveCell)
-            ActiveCell.Offset(1, 0).Select
-           
-           '	identify if the new row is a new ticker
-           If ActiveCell.Value <> current_ticker Then
-               '	if new ticker found, results for previous one are summated and printed to table
-               
-               '	last row of the old ticker
-               end_address = ActiveCell.Offset(-1, 0).Address
-               'yearly change = closing price last day - opening price first day
-               yearly_change = ActiveSheet.Range(end_address).Offset(0, 5).Value - ActiveSheet.Range(start_address).Offset(0, 5).Value
-               '	percentage change = yearly change / opening price first day * 100
-               If yearly_change <> 0 Then
-                    percentage_change = Round((yearly_change / ActiveSheet.Range(start_address).Offset(0, 5).Value * 100), 2)
-               Else
-                    percentage_change = 0
-               End If
-               
-               '	print to table
-               ActiveSheet.Range(print_address).Select
-               ActiveCell.Value = current_ticker
-               ActiveCell.Offset(0, 1).Value = yearly_change
-               ActiveCell.Offset(0, 2).Value = percentage_change
-               
-               If percentage_change < 0 Then
-                    ActiveCell.Offset(0, 2).Interior.Color = RGB(255, 0, 0)
-               Else
-                    ActiveCell.Offset(0, 2).Interior.Color = RGB(0, 255, 0)
-               End If
-                    ActiveCell.Offset(0, 3).Value = cumulative_volume
-            
-               '	check if greatest increase or decrease
-               If percentage_change >= 0 And percentage_change > greatest_increase Then
-                    greatest_increase = percentage_change
-                    ActiveSheet.Range("P2").Value = current_ticker
-                    ActiveSheet.Range("Q2").Value = percentage_change
-               ElseIf percentage_change < 0 And percentage_change < greatest_decrease Then
-                    greatest_decrease = percentage_change
-                    ActiveSheet.Range("P3").Value = current_ticker
-                    ActiveSheet.Range("Q3").Value = percentage_change
-               End If
-                
-               '	check if greatest traded volume
-               If cumulative_volume > greatest_volume Then
-                    greatest_volume = cumulative_volume
-                    ActiveSheet.Range("P4").Value = current_ticker
-                    ActiveSheet.Range("Q4").Value = cumulative_volume
-               End If
-            
-               '	move down one row in the results table
-               print_address = ActiveCell.Offset(1, 0).Address
-               
-               '	go back to the data and reset start address, ticker name and trade volume for the new ticker
-               ActiveSheet.Range(end_address).Select
-               ActiveCell.Offset(1, 0).Select
-               start_address = ActiveCell.Address
-               current_ticker = ActiveCell.Value
-               cumulative_volume = ActiveCell.Offset(0, 6)
-         
-            Else
-                '	if a next next row is not a new ticker the days volume traded is just added to the cumulative total
-                cumulative_volume = cumulative_volume + ActiveCell.Offset(0, 6).Value
-            End If
+        WS.Activate
       
-        Loop
+        '   Set additional column headers
+        Range("I1").Value = "Ticker"
+        Range("J1").Value = "Yearly Change"
+        Range("K1").Value = "Percentage Change"
+        Range("L1").Value = "Total Stock Volume"
+        Range("O2").Value = "Greatest % Increase"
+        Range("O3").Value = "Greatest % Decrease"
+        Range("O4").Value = "Greatest Total Volume"
+        Range("P1").Value = "Ticker"
+        Range("Q1").Value = "Value"
+        
+        '   Set starting values for key variables
+        current_row = 2
+        start_row = 2
+        print_row = 2
+        current_ticker = Cells(current_row, 1).Value
+
+        '   Move sequentially down rows until end is reached (first blank cell)
+        '----------------------------------------------------------------------
+        Do While IsEmpty(Cells(current_row, 1).Value) <> True
     
-    Next ws
-   
+            '   Check if new row is a new ticker
+            '   If so, summate and display results for previous ticker to the table
+            If Cells(current_row, 1).Value <> current_ticker Then
+                end_row = current_row - 1
+                
+                '   if start row is still 0 the stock never traded (so yearly change is 0)
+                If start_row = 0 Then
+                    yearly_change = 0
+                Else
+                    yearly_change = (Cells(end_row, 6).Value) - (Cells(start_row, 3).Value)
+                End If
+                
+                '   percentage change = yearly change / opening price
+                If yearly_change <> 0 Then
+                    percentage_change = Round((yearly_change / Cells(start_row, 3).Value), 2)
+                Else
+                    percentage_change = 0
+                End If
+            
+                '   Display results in table with conditional formatting
+                Call Display_Results(print_row, current_ticker, yearly_change, percentage_change, cumulative_total)
+            
+                '   Reset variable values for the new ticker
+                '   Check if the start value for the new ticker is 0 (i.e. didn't start trading on Jan 1)
+                If Cells(current_row, 3).Value <> 0 Then
+                    start_row = current_row
+                Else
+                    start_row = 0  '   if so, set to placeholder value of 0 until it's identified that trading has started
+                End If
+                cumulative_total = Cells(current_row, 7).Value
+                print_row = print_row + 1
+                current_ticker = Cells(current_row, 1).Value
+            
+            '   If new row is not a new ticker just add on the days traded volume
+            Else
+                '   check if trading has started for new stocks
+                If (Cells(current_row, 3).Value <> 0) And (start_row = 0) Then
+                    start_row = current_row
+                End If
+                cumulative_total = cumulative_total + Cells(current_row, 7).Value
+            
+            End If
+    
+            current_row = current_row + 1
+
+        Loop
+        
+        '   Call display function again, otherwise final ticker is missed
+        Call Display_Results(print_row, current_ticker, yearly_change, percentage_change, cumulative_total)
+    
+        
+        '   Find the greatest values from the results list
+        '----------------------------------------------------------------------
+        current_row = 2
+    
+        Range("P2").Value = Cells(current_row, 9).Value
+        greatest_increase = Cells(current_row, 11).Value
+        greatest_decrease = Cells(current_row, 11).Value
+        greatest_volume = Cells(current_row, 12).Value
+    
+        Do While IsEmpty(Cells(current_row, 9).Value) <> True
+            If Cells(current_row, 11).Value >= greatest_increase Then
+                greatest_increase = Cells(current_row, 11).Value
+                Range("P2").Value = Cells(current_row, 9).Value '   ticker
+                Range("Q2").Value = greatest_increase           '   value
+                Range("Q2").NumberFormat = "0.00%"
+            ElseIf Cells(current_row, 11).Value < greatest_decrease Then
+                greatest_decrease = Cells(current_row, 11).Value
+                Range("P3").Value = Cells(current_row, 9).Value '   ticker
+                Range("Q3").Value = greatest_decrease           '   value
+                Range("Q3").NumberFormat = "0.00%"
+            End If
+                        
+            If (Cells(current_row, 12).Value > greatest_volume) Then
+                greatest_volume = Cells(current_row, 12).Value
+                Range("P4").Value = Cells(current_row, 9).Value '   ticker
+                Range("Q4").Value = greatest_volume             '   value
+            End If
+            
+            current_row = current_row + 1
+            
+        Loop
+        
+        '   Additional formatting
+        Range("I:Q").Columns.AutoFit
+        ActiveWindow.ScrollRow = 1
+    
+    Next WS
+
+End Sub
+
+Sub Display_Results(print_row, current_ticker, yearly_change, percentage_change, cumulative_total)
+    
+    '   Outputs
+    Cells(print_row, 9).Value = current_ticker
+    Cells(print_row, 10).Value = yearly_change
+    Cells(print_row, 11).Value = percentage_change
+    Cells(print_row, 11).NumberFormat = "0.00%"
+    Cells(print_row, 12).Value = cumulative_total
+    
+    '   Conditional formatting
+    If yearly_change < 0 Then
+        Cells(print_row, 10).Interior.Color = RGB(255, 0, 0)
+    Else
+        Cells(print_row, 10).Interior.Color = RGB(0, 255, 0)
+    End If
+
 End Sub
