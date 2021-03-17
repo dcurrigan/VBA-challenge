@@ -57,7 +57,7 @@ Sub Stock_Check()
                 
                 '   percentage change = yearly change / opening price
                 If yearly_change <> 0 Then
-                    percentage_change = Round((yearly_change / Cells(start_row, 3).Value), 2)
+                    percentage_change = Round((yearly_change / Cells(start_row, 3).Value), 4)
                 Else
                     percentage_change = 0
                 End If
@@ -151,3 +151,4 @@ Sub Display_Results(print_row, current_ticker, yearly_change, percentage_change,
     End If
 
 End Sub
+
